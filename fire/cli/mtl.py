@@ -188,7 +188,7 @@ def hent_sridid(db, srid: str) -> int:
 
 
 # ------------------------------------------------------------------------------
-def find_path(graph, start, end, path=[]):
+def find_path(graph: Dict[str, Set[str]], start: str, end: str, path=[]):
     """
     Mikroskopisk backtracking netkonnektivitetstest. Baseret på et
     essay af GvR fra https://www.python.org/doc/essays/graphs/, men
@@ -255,7 +255,7 @@ def find_nyetablerede():
 
 
 # ------------------------------------------------------------------------------
-def find_inputfiler():
+def find_inputfiler() -> List[Tuple[str, float]]:
     """Opbyg oversigt over alle input-filnavne og deres tilhørende spredning"""
     try:
         inputfiler = pd.read_excel(
