@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from typing import List, Optional
 
@@ -335,7 +334,6 @@ class FireDb(object):
                 raise Exception(
                     f"Added beregning cannot refer to existing koordinat: {koordinat}"
                 )
-            self._close_existing_koordinat(koordinat)
             koordinat.sagsevent = sagsevent
         self.session.add(beregning)
         self.session.commit()
@@ -367,8 +365,6 @@ class FireDb(object):
             sagsevent.eventtype = eventtype
         elif sagsevent.eventtype != eventtype:
             raise Exception(f"'{sagsevent.eventtype}' sagsevent. Should be {eventtype}")
-        if sagsevent.id is None:
-            sagsevent.id = str(uuid.uuid4())
 
     def _filter_observationer(
         self,
@@ -411,45 +407,5 @@ class FireDb(object):
         # state.deleted     # session & identity_key, flushed but not committed. Commit moves it to detached state
         insp = inspect(obj)
         return not (insp.persistent or insp.detached)
-
-    def _close_existing_koordinat(self, newkoordinat):
-        """Checks if a previous version of the new koordinat exists. If it exists the existing koordinat is closed.
-
-        Parameters
-        ----------
-        newkoordinat: koordinat
-            New koordinat object to insert into database. The koordinat must have its punkt-reference set before calling
-            this method.
-        """
-        if not self._is_new_object(newkoordinat):
-            return
-
-        if not newkoordinat.punkt:
-            raise Exception("koordinat must have a reference to its punkt")
-
-        # Find existing koordinat with the same properties
-        # According to constraint "KOOR_UNIQ_001" koordinates must be unique with regard to
-        # SRID, PUNKTID, REGISTRERINGTIL
-        # Note that new koordinat MAY have int srid
-        # Note that we have noth srid and sridtype and we need to check both...
-        existing_koordinater = list(
-            [
-                k
-                for k in newkoordinat.punkt.koordinater
-                if str(k.srid.name) == str(newkoordinat.srid.name)
-                and k.registreringtil is None
-                and k is not newkoordinat
-            ]
-        )
-        assert (
-            len(existing_koordinater) <= 1
-        ), f"Punkt has more than one koordinat with srid={newkoordinat.srid} and registeringtil=None"
-
-        if existing_koordinater:
-            # self.session.expunge(newkoordinat)
-            # Close the existing version (if any)
-            for k in existing_koordinater:
-                k._registreringtil = func.sysdate()
-            # self.session.add(newkoordinat)
 
     # endregion

@@ -15,6 +15,10 @@ def test_indset_srid(firedb):
 
     assert so.name == si.name
 
+    # ... and remove si again once we've finished using it
+    firedb.session.delete(si)
+    firedb.session.commit()
+
 
 def test_hent_srider(firedb):
     srids = list(firedb.hent_srider())
